@@ -15,12 +15,9 @@ class Glitcher:
         """ Run the glitcher """
         self.bitmap = None
         if args.imagefile:
-            self.bitmap = cv2.imread( args.imagefile )
-        try:
-            self.margin = args.margin
-        except:
-            self.margin = None
-            
+            self.bitmap  = cv2.imread( args.imagefile )
+        self.margin  = args.margin
+        self.tremble = args.tremble
 
     def glitch(self, amount):
         """ Run the glitcher """
@@ -30,10 +27,9 @@ class Glitcher:
         self.line_glitch( amount )
         self.block_glitch( amount )
 
-
     def line_glitch(self, amount):
         """
-        Move lines in x-direction 
+        Move random lines in x-direction 
         """
         for i in range(0, amount):
             line = random.randint( 0, self.height-1 )
@@ -55,10 +51,10 @@ class Glitcher:
                     if random.randint(0,10)>5:
                         self.bitmap[ y:y+block_y[1], x:x+block_x[1] ] = self.bitmap[ block_y[0]:sum(block_y), block_x[0]:sum(block_x) ]
                     else:
-                        self.bitmap[ x:x+block_x[1], y:y+block_y[1] ] = self.bitmap[ block_y[0]:sum(block_y), block_x[0]:sum(block_x) ]
+                        self.bitmap[ x:x+block_x[1], y:y+block_y[1] ] = self.bitmap[ block_x[0]:sum(block_x), block_y[0]:sum(block_y) ]
                 except:
                     pass
-                x += block_x[1] + random.randint(0, 2) - 1
+                x += block_x[1] + ( random.randint(0, 2) - 1 if self.tremble else 0)
                 y += random.randint(0, 2) - 1
 
 
@@ -76,6 +72,8 @@ if __name__ == '__main__':
         help='fuckup factor, the bigger the more destroyed')
     parser.add_argument('-m', '--margin', dest='margin', type=int, action='store',
         help='block size limit, default to 10% of image')
+    parser.add_argument('-t', '--tremble', dest='tremble', type=int, action='store',
+        help='translation abberations')
     args = parser.parse_args()
 
     glitcher = Glitcher( args )
