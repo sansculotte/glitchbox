@@ -6,6 +6,14 @@ import cv2
 import numpy as np
 import scipy.io.wavfile as wavfile
 
+"""
+Distort image(s) with a soundwave.
+TODO: multichannel distortion
+      the problem here is, that just dividing by number of channels
+      and summing it up, does not add up to the correct brightness
+      and everything gets horribly slow
+      distorting the same data twice looks interesting
+"""
 
 def pcm2float(sig, dtype='float64'):
     """Convert PCM signal to floating point with a range from -1 to 1.
@@ -59,8 +67,23 @@ def chunks(l, n):
     for i in xrange(0, len(l), n):
         yield l[i:i+n]
 
+
 def save_frame(args, number, frame):
     cv2.imwrite(os.path.join(args.outdir, "frame_%06d.png"%number), frame)
+
+
+def process_multichannel(frame, block, amount, height, blocksize, channels):
+    for channel in block.T:
+        shift = np.interp(np.arange(height), np.arange(blocksize), channel)
+        for line in xrange(height):
+            frame[line] += np.roll(frame[line], int(shift[line]*amount), 0) / channels
+    return frame
+
+def process(frame, block, amount, height, blocksize):
+    shift = np.interp(np.arange(height), np.arange(blocksize), b)
+    for line in xrange(height):
+        frame[line] = np.roll(frame[line], int(shift[line]*args.amount), 0)
+    return frame
 
 
 if __name__ == '__main__':
@@ -73,6 +96,9 @@ if __name__ == '__main__':
     )
     parser.add_argument('-s', '--soundfile', dest='soundfile', action='store',
         help='soundfile'
+    )
+    parser.add_argument('-m', '--multichannel', dest='multichannel', action='store_true',
+        help='multichannel'
     )
     parser.add_argument('-f', '--fps', dest='fps', type=int, action='store', default=25,
         help='video framerate'
@@ -114,12 +140,13 @@ if __name__ == '__main__':
         if n > 0 and len(imagefiles) > 1:
             bitmap = cv2.imread(imagefiles[n % len(imagefiles)])
         frame = bitmap.copy()
-        if meta['channels'] > 1:
-            b = b.T[0]
         if len(b) < blocksize:
             b = np.lib.pad(b, ((blocksize-len(b)) // 2), 'constant')
-        shift = np.interp(np.arange(height), np.arange(blocksize), b)
-        for line in xrange(height):
-            frame[line] = np.roll(frame[line], int(shift[line]*args.amount), 0)
+        if args.multichannel and meta['channels'] > 1:
+            frame = process_multichannel(frame, b, args.amount, height, blocksize, meta['channels'])
+        else:
+            if meta['channels'] > 1:
+                b = b.T[0]
+            frame = process(frame, b, args.amount, height, blocksize)
 
         save_frame(args, n, frame)
