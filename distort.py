@@ -66,7 +66,7 @@ def save_frame(args, number, frame):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='Image Scrambler' )
     parser.add_argument('imagefile', metavar='imagefile', type=str,
-        help='filename of image to be scrambled'
+        help='image or directory with images to be scrambled'
     )
     parser.add_argument('-o', '--outdir', dest='outdir', action='store', default='/tmp',
         help='directory to write frame images to'
@@ -92,19 +92,27 @@ if __name__ == '__main__':
         print e
         sys.exit(-1)
 
+    if os.path.isdir(args.imagefile):
+        imagefiles = sorted([
+            os.path.join(args.imagefile, f)
+            for f in os.listdir(args.imagefile)
+            if os.path.isfile(os.path.join(args.imagefile, f))
+        ])
+    else:
+        imagefiles = [args.imagefile]
 
-    bitmap = cv2.imread(args.imagefile)
+    bitmap = cv2.imread(imagefiles[0])
     if bitmap is None:
-        print "Problem with the Imagefile"
+        print "Problem with the first Imagefile"
         sys.exit(-1)
 
     height, width, colors = bitmap.shape
     blocksize             = meta['rate'] // args.fps
     blocks                = meta['length']['samples'] // blocksize
-    # reduce audio samples to image height, scrolling
-    # image height 1080, audio samples 1764
 
     for n, b in enumerate(chunks(data, blocksize)):
+        if n > 0 and len(imagefiles) > 1:
+            bitmap = cv2.imread(imagefiles[n % len(imagefiles)])
         frame = bitmap.copy()
         if meta['channels'] > 1:
             b = b.T[0]
@@ -115,7 +123,3 @@ if __name__ == '__main__':
             frame[line] = np.roll(frame[line], int(shift[line]*args.amount), 0)
 
         save_frame(args, n, frame)
-
-# ignore channels for the time being
-#    for i, channel in enumerate(data.T):
-#        pass
