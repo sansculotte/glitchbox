@@ -96,7 +96,7 @@ if __name__ == '__main__':
     for n, b in enumerate(audio_chunks(data.T[0], blocksize), 1):
         #if os.path.exists(os.path.join(args.outdir, "frame_%06d.png"%n)):
         #    continue
-        if args.length is not None and n-args.start_frame > args.length:
+        if args.length is not None and n-args.start_frame >= args.length:
             continue
         if n < args.start_frame or n > blocks:
             continue

@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
 #        if os.path.exists(os.path.join(args.outdir, "frame_%06d.png"%n)):
 #            continue
-        if args.length is not None and n-args.start_frame > args.length:
+        if args.length is not None and n-args.start_frame >= args.length:
             continue
         if n < args.start_frame or n > blocks:
             continue
