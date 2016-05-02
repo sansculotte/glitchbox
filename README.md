@@ -30,10 +30,12 @@ emerge.py
 
 will show an image or animation against a backdrop of noise, more amplitude shows more of the image,
 less amplitude more of the noise. make some noise, by dumping data into a junkfile, like:
-cat image.tiff audio.wav somebinary > junkfile
+
+    cat someimage.tiff someaudiofile.wav somebinary > junkfile
 
 example:
-./emerge.py -s soundfile.wav image.png -o /tmp/ -t 0.05 --junkfile junkfile
+
+    ./emerge.py -s soundfile.wav image.png -o /tmp/ -t 0.05 --junkfile junkfile
 
 
 distort.py
@@ -42,7 +44,8 @@ distort.py
 shifts line horizontally by the amplitude of the input signal samples.
 
 example:
-./distort.py -s soundfile.wav image.png -o /tmp/ -a 3.0
+
+    ./distort.py -s soundfile.wav image.png -o /tmp/ -a 3.0
 
 
 combine emerge and distort for better noise/signal ratio
