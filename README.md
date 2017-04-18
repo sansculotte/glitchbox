@@ -2,9 +2,9 @@ Glitchbox
 =========
 
 Dependencies:
-- "opencv":http://opencv.org/ python bindings installed.
-- "numpy":http://www.numpy.org/
-- "scipy":http://www.scipy.org/
+- [opencv](http://opencv.org/ python bindings installed)
+- [numpy](http://www.numpy.org/)
+- [scipy](http://www.scipy.org/)
 
 this is best handled through pip, or your system's package manager
 
@@ -45,7 +45,7 @@ shifts line horizontally by the amplitude of the input signal samples.
 
 example:
 
-    ./distort.py -s soundfile.wav image.png -o /tmp/ -a 3.0
+    ./distort.py -s soundfile.wav image.png -o /tmp/ -a 15 
 
 
 combine emerge and distort for better noise/signal ratio
