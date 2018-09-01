@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import os
 import sys
 import argparse
@@ -15,7 +16,6 @@ Distort image(s) horizontally by a soundwave.
 def save_frame(outdir, number, frame):
     print "writing frame %06d"%number
     cv2.imwrite(os.path.join(outdir, "frame_%06d.png"%number), frame)
-
 
 def process_multichannel(frame, block, amount, height, blocksize, channels):
     for channel in block.T:

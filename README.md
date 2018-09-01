@@ -2,7 +2,7 @@ Glitchbox
 =========
 
 Dependencies:
-- [opencv](http://opencv.org/ python bindings installed)
+- [opencv](http://opencv.org/) (with python bindings installed)
 - [numpy](http://www.numpy.org/)
 - [scipy](http://www.scipy.org/)
 
