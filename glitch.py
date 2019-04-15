@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+from __future__ import division
 # vim: sts=4: ts=4: sw=4:
 import sys
 import argparse
@@ -16,7 +17,7 @@ class Glitcher:
         """ Run the glitcher """
         self.bitmap = None
         if args.imagefile:
-            self.bitmap  = cv2.imread(args.imagefile)
+            self.bitmap = cv2.imread(args.imagefile)
         self.margin  = args.margin
         self.tremble = args.tremble
 
@@ -34,7 +35,7 @@ class Glitcher:
         """
         for i in range(0, amount):
             line = random.randint(0, self.height-1)
-            shift = random.randint(0, amount) - amount / 2
+            shift = random.randint(0, amount) - amount // 2
             self.bitmap[line] = np.roll(self.bitmap[line], shift, 0)
 
     def block_glitch(self, amount):
@@ -42,15 +43,15 @@ class Glitcher:
         Copy blocks around
         """
         if self.margin is None:
-            margin = (self.width/10, self.height/10)
+            margin = (self.width//10, self.height//10)
         else:
             margin = (self.margin, self.margin)
 
         for i in range(0, amount):
             block_x = (random.randint(0, self.width-margin[0]), random.randint(1, margin[0]))
             block_y = (random.randint(0, self.height-margin[1]), random.randint(1, margin[1]))
-            x = max(0, block_x[0] + random.randint(0, amount) - amount/2)
-            y = max(0, block_y[0] + random.randint(0, amount) - amount/2)
+            x = max(0, block_x[0] + random.randint(0, amount) - amount//2)
+            y = max(0, block_y[0] + random.randint(0, amount) - amount//2)
             while x+block_x[1] < self.width or random.randint(0, amount) > 0:
                 try:
                     if random.randint(0,10)>5:
