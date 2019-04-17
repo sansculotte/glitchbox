@@ -16,6 +16,7 @@ def save_frame(outdir, number, frame):
     print("writing frame %06d" % number)
     cv2.imwrite(os.path.join(outdir, "frame_%06d.png" % number), frame)
 
+
 def process_multichannel(frame, block, amount, height, blocksize, channels):
     for channel in block.T:
         shift = np.interp(np.arange(height), np.arange(blocksize), channel)
@@ -23,19 +24,21 @@ def process_multichannel(frame, block, amount, height, blocksize, channels):
             frame[line] += np.roll(frame[line], int(shift[line]*amount), 0) / channels
     return frame
 
+
 def process(frame, block, amount, height, blocksize):
-    shift = np.interp(np.arange(height), np.arange(blocksize), b)
+    shift = np.interp(np.arange(height), np.arange(blocksize), block)
     for line in range(height):
         frame[line] = np.roll(frame[line], int(shift[line]*args.amount), 0)
     return frame
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser( description='Image Scrambler' )
+    parser = argparse.ArgumentParser(description='Image Scrambler')
     parser.add_argument('imagefile', metavar='imagefile', type=str,
         help='image or directory with images to be scrambled'
     )
-    parser.add_argument('-o', '--outdir', dest='outdir', action='store', default='/tmp',
+    parser.add_argument('-o', '--outdir', dest='outdir', action='store',
+        default='/tmp',
         help='directory to write frame images to'
     )
     parser.add_argument('-s', '--soundfile', dest='soundfile', action='store',
@@ -44,13 +47,16 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--multichannel', dest='multichannel', action='store_true',
         help='multichannel'
     )
-    parser.add_argument('-f', '--fps', dest='fps', type=int, action='store', default=25,
+    parser.add_argument('-f', '--fps', dest='fps', type=int, action='store',
+        default=25,
         help='video framerate'
     )
-    parser.add_argument('-a', '--amount', dest='amount', type=int, action='store', default=9,
+    parser.add_argument('-a', '--amount', dest='amount', type=int, action='store',
+        default=9,
         help='fuckup factor, the bigger the more destroyed'
     )
-    parser.add_argument('--start-frame', dest='start_frame', type=int, action='store', default=1,
+    parser.add_argument('--start-frame', dest='start_frame', type=int, action='store',
+        default=1,
         help='frame to start from, starting at 1'
     )
     parser.add_argument('--length', dest='length', type=int, action='store',
@@ -83,7 +89,7 @@ if __name__ == '__main__':
     blocksize             = meta.rate / args.fps
     blocks                = meta.samples / blocksize
 
-    for n, b in enumerate(audio_chunks(data, blocksize), 1):
+    for n, block in enumerate(audio_chunks(data, blocksize), 1):
 
 #        if os.path.exists(os.path.join(args.outdir, "frame_%06d.png"%n)):
 #            continue
@@ -96,11 +102,17 @@ if __name__ == '__main__':
 
         frame = bitmap.copy()
         if args.multichannel and meta.channels > 1:
-            frame = process_multichannel(frame, b, args.amount, height,
-                                         blocksize, meta.channels)
+            frame = process_multichannel(
+                frame,
+                block,
+                args.amount,
+                height,
+                blocksize,
+                meta.channels
+            )
         else:
             if meta.channels > 1:
-                b = b.T[0]
-            frame = process(frame, b, args.amount, height, blocksize)
+                block = block.T[0]
+            frame = process(frame, block, args.amount, height, blocksize)
 
         save_frame(args.outdir, n, frame)
