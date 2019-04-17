@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import division
 import os
 import sys
 import argparse
@@ -7,26 +7,25 @@ import cv2
 #from multiprocessing import Pool
 import numpy as np
 from audiopack import loadwav, audio_chunks
-
 """
 Distort image(s) horizontally by a soundwave.
 """
 
 
 def save_frame(outdir, number, frame):
-    print "writing frame %06d"%number
-    cv2.imwrite(os.path.join(outdir, "frame_%06d.png"%number), frame)
+    print("writing frame %06d" % number)
+    cv2.imwrite(os.path.join(outdir, "frame_%06d.png" % number), frame)
 
 def process_multichannel(frame, block, amount, height, blocksize, channels):
     for channel in block.T:
         shift = np.interp(np.arange(height), np.arange(blocksize), channel)
-        for line in xrange(height):
+        for line in range(height):
             frame[line] += np.roll(frame[line], int(shift[line]*amount), 0) / channels
     return frame
 
 def process(frame, block, amount, height, blocksize):
     shift = np.interp(np.arange(height), np.arange(blocksize), b)
-    for line in xrange(height):
+    for line in range(height):
         frame[line] = np.roll(frame[line], int(shift[line]*args.amount), 0)
     return frame
 
@@ -61,9 +60,9 @@ if __name__ == '__main__':
 
     try:
         meta, data = loadwav(args.soundfile)
-    except Exception, e:
-        print "Problem with the Soundfile"
-        print e
+    except Exception as e:
+        print("Problem with the Soundfile")
+        print(e)
         sys.exit(-1)
 
     if os.path.isdir(args.imagefile):
@@ -77,12 +76,12 @@ if __name__ == '__main__':
 
     bitmap = cv2.imread(imagefiles[0])
     if bitmap is None:
-        print "Problem with the first Imagefile"
+        print("Problem with the first Imagefile")
         sys.exit(-1)
 
     height, width, colors = bitmap.shape
-    blocksize             = meta.rate // args.fps
-    blocks                = meta.samples // blocksize
+    blocksize             = meta.rate / args.fps
+    blocks                = meta.samples / blocksize
 
     for n, b in enumerate(audio_chunks(data, blocksize), 1):
 
@@ -97,7 +96,8 @@ if __name__ == '__main__':
 
         frame = bitmap.copy()
         if args.multichannel and meta.channels > 1:
-            frame = process_multichannel(frame, b, args.amount, height, blocksize, meta.channels)
+            frame = process_multichannel(frame, b, args.amount, height,
+                                         blocksize, meta.channels)
         else:
             if meta.channels > 1:
                 b = b.T[0]

@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
 import os
 import sys
 import argparse
@@ -13,13 +12,13 @@ Emerge Image from junk-noise backdrop
 
 
 def save_frame(args, number, frame):
-    cv2.imwrite(os.path.join(args.outdir, "frame_%06d.png"%number), frame)
+    cv2.imwrite(os.path.join(args.outdir, "frame_%06d.png" % number), frame)
 
 
 #def process_multichannel(frame, block, amount, height, blocksize, channels):
 #    for channel in block.T:
 #        shift = np.interp(np.arange(height), np.arange(blocksize), channel)
-#        for line in xrange(height):
+#        for line in range(height):
 #            frame[line] += np.roll(frame[line], int(shift[line]*amount), 0) / channels
 #    return frame
 
@@ -47,7 +46,7 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--fps', dest='fps', type=int, action='store', default=25,
         help='video framerate'
     )
-    parser.add_argument('-t', '--threshold', dest='threshold', type=float, action='store', default='0.1',
+    parser.add_argument('-t', '--threshold', dest='threshold', type=float, action='store', default='0.01',
         help='where to split noise and signal'
     )
     parser.add_argument('-O', '--offset', dest='offset', type=int, action='store', default='0',
@@ -63,11 +62,11 @@ if __name__ == '__main__':
 
     try:
         meta, data = loadwav(args.soundfile)
-    except Exception, e:
-        print "Problem with the Soundfile"
-        print e
+    except Exception as e:
+        print("Problem with the Soundfile")
+        print(e)
         sys.exit(-1)
-    print "audiofile loaded"
+    print("audiofile loaded")
 
     if os.path.isdir(args.imagefile):
         imagefiles = sorted([
@@ -80,13 +79,13 @@ if __name__ == '__main__':
 
     bitmap = cv2.imread(imagefiles[0])
     if bitmap is None:
-        print "Problem loading the first Imagefile"
+        print("Problem loading the first Imagefile")
         sys.exit(-1)
-    print "image loaded"
+    print("image loaded")
 
     junk = np.fromfile(args.junkfile, dtype='u1')
     np.roll(junk, args.offset)
-    print "junk loaded"
+    print("junk loaded")
 
     height, width, colors = bitmap.shape
     blocksize             = meta.rate // args.fps
@@ -105,11 +104,12 @@ if __name__ == '__main__':
 
         frame = bitmap.copy()
         shift = np.interp(np.arange(height), np.arange(blocksize), b)
-        for line in xrange(height):
-            if shift[line] * shift[line] > args.threshold:
+        for line in range(height):
+            v_line = shift[line] * shift[line]
+            if v_line > args.threshold:
                 frame[line] = frame[line]
             else:
                 frame[line] = junkline(junk[juncnt:juncnt+width])
                 juncnt = (juncnt + width) % len(junk)
-        print n
+        print(n)
         save_frame(args, n, frame)

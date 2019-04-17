@@ -57,7 +57,7 @@ def loadwav(filename):
 
 def audio_chunks(data, blocksize):
     """Yield successive n-sized chunks from l."""
-    for i in xrange(0, len(data), blocksize):
+    for i in range(0, len(data), blocksize):
         block = data[i:i+blocksize]
         if len(block) < blocksize:
             pad = blocksize-len(block)
