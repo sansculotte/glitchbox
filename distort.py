@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import division
 import os
 import sys
@@ -21,7 +21,7 @@ def process_multichannel(frame, block, amount, height, blocksize, channels):
     for channel in block.T:
         shift = np.interp(np.arange(height), np.arange(blocksize), channel)
         for line in range(height):
-            frame[line] += np.roll(frame[line], int(shift[line]*amount), 0) / channels
+            frame[line] += np.roll(frame[line], int(shift[line]*amount), 0) // channels
     return frame
 
 
@@ -86,8 +86,8 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     height, width, colors = bitmap.shape
-    blocksize             = meta.rate / args.fps
-    blocks                = meta.samples / blocksize
+    blocksize             = meta.rate // args.fps
+    blocks                = meta.samples // blocksize
 
     for n, block in enumerate(audio_chunks(data, blocksize), 1):
 
