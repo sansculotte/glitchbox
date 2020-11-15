@@ -8,20 +8,51 @@ from scipy.ndimage import rotate, center_of_mass  # type: ignore
 import random
 
 
-class Glitcher:
+class GlitchBase:
+    """
+    base class for shared glitch operations
+    """
+
+    bitmap = None
+
+    def random_block(self):
+        """
+        Coordinates for a random block
+        """
+        if self.margin is None:
+            margin = (self.width//10, self.height//10)
+        else:
+            margin = (self.margin, self.margin)
+
+        x_start = random.randint(0, self.width-margin[0])
+        width = random.randint(1, self.width - x_start - margin[0])
+        x_edge = (x_start, width)
+
+        y_start = random.randint(0, self.height-margin[1])
+        height = random.randint(1, self.height - y_start - margin[1])
+        y_edge = (y_start, height)
+
+        return (x_edge, y_edge)
+
+    def save(self, outfile):
+        """ Save the scrambled files """
+        cv2.imwrite(outfile, self.bitmap)
+
+
+class Glitcher(GlitchBase):
     """
     Inject, distort, disturb, intersect, explode an image file with various
     methods of destruction
     """
     def __init__(self, args):
         """ Run the glitcher """
-        self.bitmap = None
         if args.imagefile:
             self.bitmap = cv2.imread(args.imagefile)
 
         self.line: int = args.line
         self.block: int = args.block
         self.rotation: int = args.rotation
+        self.perspective: int = args.perspective
         self.angle: float = args.angle
         self.margin: int = args.margin
         self.jitter: int = args.jitter
@@ -37,6 +68,7 @@ class Glitcher:
         self.line_glitch(amount=self.line)
         self.block_glitch(amount=self.block)
         self.block_rotate_glitch(amount=self.rotation)
+        self.perspective_scramble(amount=self.perspective)
 
     def line_glitch(self, amount: int = 0):
         """
@@ -87,8 +119,9 @@ class Glitcher:
                     pass
 
                 if self.jitter:
-                    x += edge_x[1] + random.randint(0, 2) - 1
-                    y += random.randint(0, 2) - 1
+                    jitter = self.jitter
+                    x += edge_x[1] + random.randint(0, jitter) - jitter // 2
+                    y += random.randint(0, jitter) - jitter // 2
                 else:
                     x += edge_x[1]
 
@@ -108,41 +141,59 @@ class Glitcher:
                     edge_x[0]:sum(edge_x),
                     edge_y[0]:sum(edge_y)
                 ]
-                rotated = rotate(block, self.angle)
+                rotated = rotate(block, self.angle, mode='nearest')
                 width, height, _ = rotated.shape
-                self.bitmap[x:x + width, y:y + height] += rotated
-            except Exception:
+                self.bitmap[x:x + width, y:y + height] = rotated
+            except Exception as e:
+                print(e)
                 pass
 
-    def threed_scramble(self):
+    def perspective_scramble(self, amount: int = 0):
         """
         Cut image into shards and throw them into space
         """
-        raise Exception('Not implemented')
+        if amount <= 0:
+            return
 
-    def random_block(self):
-        """
-        Coordinates for a random block
-        """
-        if self.margin is None:
-            margin = (self.width//10, self.height//10)
-        else:
-            margin = (self.margin, self.margin)
+        cow = center_of_mass(self.bitmap)
+        mop = (self.width // 2, self.height // 2)
+        if isinstance(cow, list):
+            cow = cow[0]
+            mop = cow[1]
 
-        x_start = random.randint(0, self.width-margin[0])
-        width = random.randint(1, self.width - x_start - margin[0])
-        x_edge = (x_start, width)
+        for i in range(amount):
+            edge_x, edge_y = self.random_block()
+            x = random.randint(0, self.width - edge_x[1])
+            y = random.randint(0, self.height - edge_y[1])
 
-        y_start = random.randint(0, self.height-margin[1])
-        height = random.randint(1, self.height - y_start - margin[1])
-        y_edge = (y_start, height)
+            pts1 = np.float32([
+                [edge_x[0], edge_y[0]],
+                [sum(edge_x), edge_y[0]],
+                [edge_x[0], sum(edge_y)],
+                [sum(edge_x), sum(edge_y)]
+            ])
+            pts2 = np.float32([
+                [cow[0], cow[1]],
+                [mop[0], mop[1]],
+                [x, y],
+                [(x + sum(edge_x)) % self.width, (y + sum(edge_y)) % self.height]
+            ])
+            M = cv2.getPerspectiveTransform(pts1, pts2)
+            try:
+                warped = cv2.warpPerspective(
+                    self.bitmap,
+                    M,
+                    (self.width - int(cow[0]), self.height - int(cow[1]))
+                )
+                width, height, colors = warped.shape
+                t_x = int(cow[0])
+                t_y = int(cow[1])
+                for c in range(colors):
+                    self.bitmap[t_x:(t_x + width), t_y:(t_y + height), c] = warped[:, :, c]
 
-        return (x_edge, y_edge)
-
-    def save(self, outfile):
-        """ Save the scrambled files """
-        cv2.imwrite(outfile, self.bitmap)
-
+            except Exception as e:
+                print(e)
+                pass
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='Image Scrambler')
@@ -156,17 +207,23 @@ if __name__ == '__main__':
         help='image file to write output to'
     )
     ap.add_argument('-b', '--block', dest='block', type=int, action='store',
-        default='9',
+        default=9,
         help='amount of block destruction'
     )
     ap.add_argument('-l', '--line', dest='line', type=int, action='store',
-        default='9',
+        default=9,
         help='amount of line destruction'
     )
     ap.add_argument('-r', '--rotation', dest='rotation', type=int, action='store',
+        default=0,
         help='amount of rotation'
     )
+    ap.add_argument('-p', '--perspective', dest='perspective', type=int, action='store',
+        default=0,
+        help='amount of perspective sharding'
+    )
     ap.add_argument('-a', '--angle', dest='angle', type=float, action='store',
+        default=7.0,
         help='rotation angle in degree, defaults to 7°'
     )
     ap.add_argument('-m', '--margin', dest='margin', type=int, action='store',
