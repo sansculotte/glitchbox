@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # vim: sts=4: ts=4: sw=4:
+
 import sys
 import argparse
 import cv2  # type: ignore
@@ -14,22 +15,27 @@ class GlitchBase:
     """
 
     bitmap = None
+    margin = None
 
-    def random_block(self):
+    def random_block(self, width=None, height=None):
         """
         Coordinates for a random block
         """
+        width = width or self.width
+        height = height or self.height
+
         if self.margin is None:
-            margin = (self.width//10, self.height//10)
+            smaller = min(width//10, height//10)
+            margin = (smaller, smaller)
         else:
             margin = (self.margin, self.margin)
 
-        x_start = random.randint(0, self.width-margin[0])
-        width = random.randint(1, self.width - x_start - margin[0])
+        x_start = random.randint(0, width-margin[0])
+        width = random.randint(1, width - x_start - margin[0])
         x_edge = (x_start, width)
 
-        y_start = random.randint(0, self.height-margin[1])
-        height = random.randint(1, self.height - y_start - margin[1])
+        y_start = random.randint(0, height-margin[1])
+        height = random.randint(1, height - y_start - margin[1])
         y_edge = (y_start, height)
 
         return (x_edge, y_edge)
@@ -244,7 +250,7 @@ if __name__ == '__main__':
     try:
         glitcher.glitch()
     except Exception as e:
-        print(e)
+        print(e, file=sys.stderr)
         sys.exit(-1)
 
     glitcher.save(args.outfile)
