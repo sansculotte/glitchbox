@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from __future__ import division
 import os
 import sys
 import argparse
@@ -80,7 +79,7 @@ if __name__ == '__main__':
     else:
         imagefiles = [args.imagefile]
 
-    bitmap = cv2.imread(imagefiles[0])
+    bitmap = cv2.imread(imagefiles[0], cv2.IMREAD_UNCHANGED)
     if bitmap is None:
         print("Problem with the first Imagefile")
         sys.exit(-1)
