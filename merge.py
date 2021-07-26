@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 # vim: sts=4: ts=4: sw=4:
+from enum import Enum
 import sys
 import argparse
 import cv2
 import numpy as np
+from scipy.signal import fftconvolve
 import random
 from glitch import GlitchBase
+
+
+class Method(Enum):
+    block = 'block'
+    convolution = 'convolution'
 
 
 class Merger(GlitchBase):
@@ -26,17 +33,15 @@ class Merger(GlitchBase):
 
         self.height, self.width, self.colors = self.bitmap_1.shape
         self.bitmap = np.zeros(shape=(self.width, self.height, 3), dtype=np.uint8)
-        if self.method == 'block':
+        if self.method == Method.block:
             self.block_merge(self.iterations, amount=100)
-        elif self.method == 'convolution':
+        elif self.method == Method.convolution:
+            self.convolution_merge()
 
     def convolution_merge(self):
-        l1 = np.reshape(self.bitmap_1, -1)
-        l2 = np.reshape(self.bitmap_2, -1)
-        l2 = np.resize(l2, 4321)
-        new = np.convolve(l1, l2)
-        ex = len(l2) // 2
-        self.bitmap = np.reshape(new[ex:-ex], self.bitmap_1.shape)
+        # shape = -1 means i dimensional with length inferred from number
+        # of elements
+        self.bitmap = fftconvolve(self.bitmap_1, self.bitmap_2, mode='same')
 
     def block_merge(self, iterations, amount, relation=50):
         for i in range(iterations):
@@ -82,8 +87,8 @@ if __name__ == '__main__':
         help='filename of second image to be merged')
     parser.add_argument('-o', '--outfile', dest='outfile', action='store', default='output.png',
         help='image file to write output to')
-    parser.add_argument('-m', '--method', dest='method', action='store', default='block',
-        help='merge method')
+    parser.add_argument('-m', '--method', dest='method', type=Method, action='store', default='block',
+        help='merge method: block | convolution')
     parser.add_argument('-i', '--iterations', dest='iterations', type=int, action='store', default=100,
         help='merge method')
     parser.add_argument('-j', '--jitter', dest='jitter', type=int, action='store',
