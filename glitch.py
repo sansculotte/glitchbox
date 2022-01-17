@@ -63,6 +63,7 @@ class Glitcher(GlitchBase):
         self.margin: int = args.margin
         self.jitter: int = args.jitter
         self.mask = args.mask
+        self.pixel_sort = args.pixel_sort
 
     def glitch(self):
         """ Run the glitcher """
@@ -75,6 +76,8 @@ class Glitcher(GlitchBase):
         self.block_glitch(amount=self.block)
         self.block_rotate_glitch(amount=self.rotation)
         self.perspective_scramble(amount=self.perspective)
+        if self.pixel_sort:
+            self.pixel_sort_glitch()
 
     def line_glitch(self, amount: int = 0):
         """
@@ -83,10 +86,14 @@ class Glitcher(GlitchBase):
         if amount <= 0:
             return
 
-        for i in range(amount):
+        for _ in range(amount):
             line = random.randint(0, self.height-1)
             shift = random.randint(0, amount) - amount // 2
             self.bitmap[line] = np.roll(self.bitmap[line], shift, 0)
+
+    def pixel_sort_glitch(self):
+        for i, line in enumerate(self.bitmap):
+            self.bitmap[i] = np.sort(line)
 
     def block_glitch(self, amount: int = 0):
         """
@@ -244,6 +251,7 @@ if __name__ == '__main__':
     ap.add_argument('--mask-threshold', dest='mask_threshold', action='store',
         default=0.5
     )
+    ap.add_argument('--pixel-sort', action='store_true')
     args = ap.parse_args()
 
     glitcher = Glitcher(args)
